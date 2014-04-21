@@ -1,0 +1,3 @@
+CheatItemWatchDog
+=================
+Clear item attributes.
