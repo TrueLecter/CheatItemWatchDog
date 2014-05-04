@@ -1,0 +1,2 @@
+lore:
+  forbidden: ['generic.maxHealth','generic.movementSpeed','generic.attackDamage','generic.followRange','generic.knockbackResistance']
