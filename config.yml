@@ -1,2 +1,18 @@
-lore:
-  forbidden: ['generic.maxHealth','generic.movementSpeed','generic.attackDamage','generic.followRange','generic.knockbackResistance']
+enchants:
+#Are enchantments allowed?
+#DEFAULT: true
+  allow: true
+#Is it possible to make unnatural enchantments, such as "Feather Falling IV" on helmet or "Protectoin X" on Boots
+#Set true to allow only natural enchants.
+#DEFAULT : true 
+  naturalLevels: true
+#DEFAULT: 10
+  maxlevel: 10
+locale:
+#!!!Add space after prefix string
+#DEFAULT:[&3CIWD&r]   
+  prefix: '[&3CIWD&r] '
+  notEnoughArguments: '&4Not enough arguments!&r'
+  accessDenied: '&4Not enough permissions!&r'
+  reloadComplete: '&2Succesfully reloaded&r'
+  consoleReloadNootify: '&2Reloaded config by &6$PLAYERNAME$&r'

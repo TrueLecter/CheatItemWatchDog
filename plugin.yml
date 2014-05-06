@@ -2,3 +2,7 @@ name: CheatItemWatchDog
 main: truelecter.ciwg.WatchDog
 version: 0.1
 author: _TrueLecter_
+commands:
+   ciwd:
+      description: Basic CheatItemWatchDog command
+      usage: /<command>
