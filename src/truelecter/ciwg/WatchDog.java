@@ -1,132 +1,134 @@
 package truelecter.ciwg;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import lib.Attributes;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WatchDog extends JavaPlugin implements Listener {
-	private boolean naturalLevels = true;
-	private int maxLevel = 10;
-	private boolean allowEnchants = true;
-	private String prefix = "[&3CIWD&r] ";
-	private String notEnoughArguments = "&4Not enough arguments!&r";
-	private String accessDenied = "&4Not enough permissions!&r";
-	private String reloadComplete = "&2Succesfully reloaded&r";
-	private String consoleReloadNootify = "&2Reloaded config by &6$PLAYERNAME$&r";
+	public Logger logger = Logger.getLogger("Minecraft");
+	public String prefix = ChatColor.GRAY + "[" + ChatColor.GREEN + "CIWD" + ChatColor.GRAY + "] "
+			+ ChatColor.RESET;
 
-	public boolean onCommand(CommandSender sender, Command cmd,
-			String commandLabel, String[] args) {
+	public String getDeveloper() {
+		String DEV = "";
+		DEV = ChatColor.RED + "" + ChatColor.MAGIC + "!" + ChatColor.WHITE + "_" + ChatColor.WHITE + "T"
+				+ ChatColor.AQUA + "r" + ChatColor.AQUA + "u" + ChatColor.BLUE + "e" + ChatColor.BLUE + "L"
+				+ ChatColor.BLUE + "e" + ChatColor.BLUE + "c" + ChatColor.AQUA + "t" + ChatColor.AQUA + "e"
+				+ ChatColor.WHITE + "r" + ChatColor.WHITE + "_" + ChatColor.RED + "" + ChatColor.MAGIC + "!";
+		return DEV;
+	}
+
+	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
+		PluginDescriptionFile pdfFile = getDescription();
 		if (cmd.getName().equalsIgnoreCase("ciwd")) {
-			if (args.length == 0) {
-				sender.sendMessage(ChatColor
-						.translateAlternateColorCodes(
-								'&',
-								prefix
-										+ "&rBy &6_TrueLecter_&r for &2Ran&1dom&6Cra&4ft&r :)"));
-				return true;
-			}
-			if (!sender.hasPermission("watchdog.admin")) {
-				if (accessDenied != "")
-					sender.sendMessage(ChatColor.translateAlternateColorCodes(
-							'&', accessDenied));
-				return true;
-			}
-			if (args.length < 2) {
-				if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-					this.reloadConfig();
-					this.loadSettings();
-					sender.sendMessage(ChatColor.translateAlternateColorCodes(
-							'&', reloadComplete));
-					if (sender instanceof Player)
-						this.getServer()
-								.getConsoleSender()
-								.sendMessage(
-										ChatColor.translateAlternateColorCodes(
-												'&',
-												consoleReloadNootify
-														.replaceAll(
-																"$PLAYERNAME$",
-																sender.getName())));
-					return true;
+			sender.sendMessage(ChatColor.DARK_GREEN + this.prefix + "v" + pdfFile.getVersion() + ChatColor.GREEN
+					+ ChatColor.BOLD + " от " + getDeveloper());
+		}
+		return true;
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onInteract(PlayerInteractEvent event) {
+		Player p = event.getPlayer();
+		ItemStack item = p.getItemInHand();
+		if (checkAttributes(item)) {
+			item = removeAttributes(item);
+			event.setCancelled(true);
+			toConsoleAttr(p.getName());
+		}
+		p.getEquipment().setHelmet(removeAttributes(p.getEquipment().getHelmet()));
+		if (!item.getEnchantments().isEmpty()) {
+			boolean isHave = false;
+			for (Map.Entry<Enchantment, Integer> ench : item.getEnchantments().entrySet()) {
+				if (((Integer) ench.getValue()).intValue() > 5) {
+					p.getItemInHand().removeEnchantment((Enchantment) ench.getKey());
+					isHave = true;
 				}
-				if (notEnoughArguments != "")
-					sender.sendMessage(ChatColor.translateAlternateColorCodes(
-							'&', notEnoughArguments));
-				return true;
 			}
-
-			return true;
-		}
-		return false;
-	}
-
-	private ItemStack removeNotValidEnchantments(ItemStack item) {
-		Map<Enchantment, Integer> Enchants = item.getEnchantments();
-		Map<Enchantment, Integer> newEnchants = item.getEnchantments();
-		ItemStack newItem = new ItemStack(item.getType());
-		for (Enchantment e : Enchants.keySet()) {
-			if (!allowEnchants) {
-				continue;
-			}
-			if (!e.canEnchantItem(new ItemStack(item.getType()))) {
-				if (naturalLevels)
-					continue;
-			}
-			if (e.getMaxLevel() > maxLevel)
-				item.getEnchantments().put(e, maxLevel);
-			newEnchants.put(e, Enchants.get(e));
-		}
-		newItem.setItemMeta(item.getItemMeta());
-		newItem.setDurability(item.getDurability());
-		newItem.setAmount(item.getAmount());
-		newItem.addEnchantments(newEnchants);
-		return newItem;
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onInventory(InventoryEvent event) {
-		ItemStack[] items = event.getInventory().getContents();
-		for (ItemStack item : items) {
-			if (item != null) {
-				Attributes attr = new Attributes(item);
-				attr.clear();
-				item = removeNotValidEnchantments(attr.getStack());
+			if (isHave) {
+				event.setCancelled(true);
+				toConsoleEnch(p.getName());
 			}
 		}
 	}
 
-	private void loadSettings() {
-		this.saveDefaultConfig();
-		naturalLevels = this.getConfig().getBoolean("enchants.naturalLevels",
-				true);
-		maxLevel = this.getConfig().getInt("enchants.maxlevel", 10);
-		allowEnchants = this.getConfig().getBoolean("enchants.naturalLevels",
-				true);
-		prefix = this.getConfig().getString("locale.prefix", prefix);
-		notEnoughArguments = prefix.concat(this.getConfig().getString(
-				"locale.notEnoughArguments", notEnoughArguments));
-		accessDenied = prefix.concat(this.getConfig().getString(
-				"locale.accessDenied", accessDenied));
-		reloadComplete = prefix.concat(this.getConfig().getString(
-				"locale.reloadComplete", reloadComplete));
-		consoleReloadNootify = prefix.concat(this.getConfig().getString(
-				"locale.consoleReloadNootify", consoleReloadNootify));
+	public ItemStack removeAttributes(ItemStack item) {
+		if (item == null) {
+			return item;
+		}
+		if (item.getType() == Material.AIR) {
+			return item;
+		}
+		Attributes attr = new Attributes(item);
+		attr.clear();
+		return attr.getStack();
+	}
+
+	public boolean checkAttributes(ItemStack item) {
+		if (item == null) {
+			return false;
+		}
+		if (item.getType().equals(Material.AIR)) {
+			return false;
+		}
+		Attributes attr = new Attributes(item);
+		return attr.values().iterator().hasNext();
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onInventoryClick(InventoryClickEvent event) {
+		ItemStack item = event.getCursor();
+		if (checkAttributes(item)) {
+			item = removeAttributes(item);
+			event.setCancelled(true);
+			toConsoleAttr(event.getWhoClicked().getName());
+		}
+		event.getWhoClicked().getEquipment()
+				.setHelmet(removeAttributes(event.getWhoClicked().getEquipment().getHelmet()));
+		if (event.getCurrentItem() == null) {
+			return;
+		}
+		if (!item.getEnchantments().isEmpty()) {
+			boolean isHave = false;
+			for (Map.Entry<Enchantment, Integer> ench : item.getEnchantments().entrySet()) {
+				if (((Integer) ench.getValue()).intValue() > 5) {
+					item.removeEnchantment((Enchantment) ench.getKey());
+					isHave = true;
+				}
+			}
+			if (isHave) {
+				event.setCancelled(true);
+				event.getInventory().setItem(event.getSlot(), item);
+				toConsoleEnch(event.getWhoClicked().getName());
+			}
+		}
+	}
+	
+	private void toConsoleEnch(String name) {
+		this.logger.warning(ChatColor.RED + "Wrong enchantments cleared! [" + name + "]");
+	}
+
+	private void toConsoleAttr(String name) {
+		this.logger.warning(ChatColor.RED + "Wrong attributes cleared! [" + name + "]");
 	}
 
 	public void onEnable() {
-		this.saveDefaultConfig();
 		getServer().getPluginManager().registerEvents(this, this);
-		loadSettings();
 	}
 }
