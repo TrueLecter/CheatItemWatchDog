@@ -49,8 +49,8 @@ public class WatchDog extends JavaPlugin implements Listener {
 		ItemStack item = p.getItemInHand();
 		if (checkAttributes(item)) {
 			item = removeAttributes(item);
-			event.setCancelled(true);
 			toConsoleAttr(p.getName());
+			event.setCancelled(true);
 		}
 		p.getEquipment().setHelmet(removeAttributes(p.getEquipment().getHelmet()));
 		if (!item.getEnchantments().isEmpty()) {
@@ -75,7 +75,7 @@ public class WatchDog extends JavaPlugin implements Listener {
 		if (item.getType() == Material.AIR) {
 			return item;
 		}
-		Attributes attr = new Attributes(item);
+		Attributes attr = new Attributes(item.clone());
 		attr.clear();
 		return attr.getStack();
 	}
@@ -87,17 +87,20 @@ public class WatchDog extends JavaPlugin implements Listener {
 		if (item.getType().equals(Material.AIR)) {
 			return false;
 		}
-		Attributes attr = new Attributes(item);
+		Attributes attr = new Attributes(item.clone());
 		return attr.values().iterator().hasNext();
-	}
+	}//067-748-57-16 Анатолий Алексанлрович 
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack item = event.getCursor();
 		if (checkAttributes(item)) {
 			item = removeAttributes(item);
-			event.setCancelled(true);
+			//ItemStack im = new ItemStack(item.getType());
+			//im.setAmount(item.getAmount());
+			//im.setItemMeta(item.getItemMeta());
 			toConsoleAttr(event.getWhoClicked().getName());
+			event.setCancelled(true);
 		}
 		event.getWhoClicked().getEquipment()
 				.setHelmet(removeAttributes(event.getWhoClicked().getEquipment().getHelmet()));
@@ -121,11 +124,11 @@ public class WatchDog extends JavaPlugin implements Listener {
 	}
 	
 	private void toConsoleEnch(String name) {
-		this.logger.warning(ChatColor.RED + "Wrong enchantments cleared! [" + name + "]");
+		System.out.println(ChatColor.RED + "Wrong enchantments cleared! [" + name + "]");
 	}
 
 	private void toConsoleAttr(String name) {
-		this.logger.warning(ChatColor.RED + "Wrong attributes cleared! [" + name + "]");
+		System.out.println(ChatColor.RED + "Wrong attributes cleared! [" + name + "]");
 	}
 
 	public void onEnable() {
